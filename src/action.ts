@@ -11,7 +11,6 @@ let markedAsInProgress = false;
 import { ApiResponse, Deployment } from './types';
 
 export default async function run() {
-  const accountEmail = core.getInput('accountEmail', { required: true, trimWhitespace: true });
   const apiKey = core.getInput('apiKey', { required: true, trimWhitespace: true });
   const accountId = core.getInput('accountId', { required: true, trimWhitespace: true });
   const project = core.getInput('project', { required: true, trimWhitespace: true });
@@ -25,7 +24,7 @@ export default async function run() {
     // We want to wait a few seconds, don't want to spam the API :)
     await sleep();
 
-    const deployment: Deployment|undefined = await pollApi(accountEmail, apiKey, accountId, project, commitHash);
+    const deployment: Deployment|undefined = await pollApi(apiKey, accountId, project, commitHash);
     if (!deployment) {
       console.log('Waiting for the deployment to start...');
       continue;
@@ -70,7 +69,7 @@ export default async function run() {
   }
 }
 
-async function pollApi(accountEmail: string, apiKey: string, accountId: string, project: string, commitHash: string): Promise<Deployment|undefined> {
+async function pollApi(apiKey: string, accountId: string, project: string, commitHash: string): Promise<Deployment|undefined> {
   // curl -X GET "https://api.cloudflare.com/client/v4/accounts/:account_id/pages/projects/:project_name/deployments" \
   //   -H "X-Auth-Email: user@example.com" \
   //   -H "X-Auth-Key: c2547eb745079dac9320b638f5e225cf483cc5cfdda41"
@@ -80,8 +79,7 @@ async function pollApi(accountEmail: string, apiKey: string, accountId: string, 
   try {
     res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${project}/deployments?sort_by=created_on&sort_order=desc`, {
       headers: {
-        'X-Auth-Email': accountEmail,
-        'X-Auth-Key': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
       }
     });
   } catch(e) {

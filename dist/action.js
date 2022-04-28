@@ -11273,7 +11273,6 @@ var waiting = true;
 var ghDeployment;
 var markedAsInProgress = false;
 async function run() {
-  const accountEmail = core.getInput("accountEmail", { required: true, trimWhitespace: true });
   const apiKey = core.getInput("apiKey", { required: true, trimWhitespace: true });
   const accountId = core.getInput("accountId", { required: true, trimWhitespace: true });
   const project = core.getInput("project", { required: true, trimWhitespace: true });
@@ -11283,7 +11282,7 @@ async function run() {
   let lastStage = "";
   while (waiting) {
     await sleep();
-    const deployment = await pollApi(accountEmail, apiKey, accountId, project, commitHash);
+    const deployment = await pollApi(apiKey, accountId, project, commitHash);
     if (!deployment) {
       console.log("Waiting for the deployment to start...");
       continue;
@@ -11317,15 +11316,14 @@ async function run() {
     }
   }
 }
-async function pollApi(accountEmail, apiKey, accountId, project, commitHash) {
+async function pollApi(apiKey, accountId, project, commitHash) {
   var _a2, _b, _c;
   let res;
   let body;
   try {
     res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${project}/deployments?sort_by=created_on&sort_order=desc`, {
       headers: {
-        "X-Auth-Email": accountEmail,
-        "X-Auth-Key": apiKey
+        "Authorization": `Bearer ${apiKey}`
       }
     });
   } catch (e) {
